@@ -46,6 +46,12 @@
         }
 
         function pickWinners() {
+            // Confirmation alert
+            const proceed = confirm("Are you sure you want to proceed?");
+            if (!proceed) {
+                return;
+            }
+            
             const numWinners = parseInt(document.getElementById('numWinners').value);
             if (numWinners > participants.length) {
                 alert("Not enough remaining participants to pick " + numWinners + " winners.");
