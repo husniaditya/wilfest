@@ -22,12 +22,14 @@
             100% { transform: rotate(360deg); }
         }
         .winner-list-item {
-            font-size: 2rem; /* Larger text */
-            font-style: bold; /* Bold text */
-            padding: 25px; /* More space */
-            margin-bottom: 40px; /* Space between items */
+            font-size: 2rem;
+            font-weight: bold;
+            padding: 25px;
+            margin-bottom: 40px;
         }
     </style>
+    <!-- html2canvas library for saving images -->
+    <script src="js/html2canvas.min.js"></script>
     <script>
         let participants = [];
         let pickedWinners = [];
@@ -46,33 +48,23 @@
         }
 
         function pickWinners() {
-            // Confirmation alert
             const proceed = confirm("Are you sure you want to proceed?");
-            if (!proceed) {
-                return;
-            }
-            
+            if (!proceed) return;
+
             const numWinners = parseInt(document.getElementById('numWinners').value);
             if (numWinners > participants.length) {
                 alert("Not enough remaining participants to pick " + numWinners + " winners.");
                 return;
             }
 
-            // Show loading animation
             document.getElementById('loading').style.display = 'block';
 
             setTimeout(() => {
-                // Shuffle and pick winners
                 const shuffled = [...participants].sort(() => Math.random() - 0.5);
                 const newWinners = shuffled.slice(0, numWinners);
-
-                // Remove the picked winners from participants
                 participants = participants.filter(p => !newWinners.includes(p));
-
-                // Add to pickedWinners list for tracking
                 pickedWinners.push(...newWinners);
 
-                // Display winners with numbers
                 document.getElementById('loading').style.display = 'none';
                 const winnersList = document.getElementById('winnersList');
                 winnersList.innerHTML = `<h3 class="my-3">Number of Winners: ${numWinners}</h3>`;
@@ -82,9 +74,20 @@
                     listItem.textContent = `${index + 1}. ${winner}`;
                     winnersList.appendChild(listItem);
                 });
-                
+
+                document.getElementById('saveImageButton').style.display = 'block';
                 alert("Remaining participants: " + participants.length);
-            }, 1000); // Simulate loading time
+            }, 1000);
+        }
+
+        function saveAsImage() {
+            const winnersList = document.getElementById('winnersList');
+            html2canvas(winnersList).then(canvas => {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL("image/png");
+                link.download = 'winners_list.png';
+                link.click();
+            });
         }
     </script>
 </head>
@@ -109,11 +112,16 @@
             </div>
 
             <ul id="winnersList" class="list-group mt-4"></ul>
+
+            <!-- Save as Image button, initially hidden -->
+            <button id="saveImageButton" class="btn btn-secondary mt-4" onclick="saveAsImage()" style="display: none;">
+                Save Winners List as Image
+            </button>
         </div>
     </div>
 </div>
 
-<!-- Bootstrap JS and dependencies (optional for advanced Bootstrap components) -->
+<!-- Bootstrap JS and dependencies -->
 <script src="js/jquery-3.5.1.slim.min.js"></script>
 <script src="js/popper.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
