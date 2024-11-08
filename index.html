@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wilfest - Doorprize Winners</title>
-    <!-- Bootstrap CSS -->
     <link href="css/style.css" rel="stylesheet">
     <style>
         .loading-spinner {
@@ -28,11 +27,19 @@
             margin-bottom: 40px;
         }
     </style>
-    <!-- html2canvas library for saving images -->
     <script src="js/html2canvas.min.js"></script>
     <script>
         let participants = [];
         let pickedWinners = [];
+
+        // Load data from localStorage on page load
+        window.onload = function() {
+            const savedParticipants = localStorage.getItem("participants");
+            if (savedParticipants) {
+                participants = JSON.parse(savedParticipants);
+                updateParticipantStatus();
+            }
+        };
 
         function handleFileUpload(event) {
             const file = event.target.files[0];
@@ -40,8 +47,15 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const lines = e.target.result.split('\n');
-                    participants = lines.map(line => line.split(',')[0]).filter(Boolean);
+                    participants = lines.map(line => ({
+                        name: line.split(',')[0].trim(),
+                        isWinner: false
+                    })).filter(participant => participant.name);
+
+                    // Save the loaded participants to localStorage
+                    localStorage.setItem("participants", JSON.stringify(participants));
                     alert("File loaded successfully! Total participants: " + participants.length);
+                    updateParticipantStatus();
                 };
                 reader.readAsText(file);
             }
@@ -52,7 +66,9 @@
             if (!proceed) return;
 
             const numWinners = parseInt(document.getElementById('numWinners').value);
-            if (numWinners > participants.length) {
+            const availableParticipants = participants.filter(p => !p.isWinner);
+
+            if (numWinners > availableParticipants.length) {
                 alert("Not enough remaining participants to pick " + numWinners + " winners.");
                 return;
             }
@@ -60,10 +76,19 @@
             document.getElementById('loading').style.display = 'block';
 
             setTimeout(() => {
-                const shuffled = [...participants].sort(() => Math.random() - 0.5);
+                const shuffled = availableParticipants.sort(() => Math.random() - 0.5);
                 const newWinners = shuffled.slice(0, numWinners);
-                participants = participants.filter(p => !newWinners.includes(p));
-                pickedWinners.push(...newWinners);
+
+                // Mark selected winners and update display
+                newWinners.forEach(winner => {
+                    winner.isWinner = true;
+                    pickedWinners.push(winner.name);
+                });
+
+                // Update localStorage with the new participant statuses
+                localStorage.setItem("participants", JSON.stringify(participants));
+                
+                updateParticipantStatus();
 
                 document.getElementById('loading').style.display = 'none';
                 const winnersList = document.getElementById('winnersList');
@@ -71,13 +96,21 @@
                 newWinners.forEach((winner, index) => {
                     const listItem = document.createElement('li');
                     listItem.className = 'list-group-item list-group-item-success winner-list-item';
-                    listItem.textContent = `${index + 1}. ${winner}`;
+                    listItem.textContent = `${index + 1}. ${winner.name}`;
                     winnersList.appendChild(listItem);
                 });
 
                 document.getElementById('saveImageButton').style.display = 'block';
-                alert("Remaining participants: " + participants.length);
+                alert("Remaining participants: " + availableParticipants.length);
             }, 1000);
+        }
+
+        function updateParticipantStatus() {
+            const textarea = document.getElementById('dataTextarea');
+            textarea.value = participants.map(participant => {
+                const status = participant.isWinner ? '✗' : '✓';
+                return `${status} ${participant.name}`;
+            }).join('\n');
         }
 
         function saveAsImage() {
@@ -105,6 +138,13 @@
                 <label for="csvFile">Upload CSV File:</label>
                 <input type="file" id="csvFile" class="form-control-file" accept=".csv" onchange="handleFileUpload(event)">
             </div>
+
+            <!-- Text area to display the imported data with status markers -->
+            <div class="form-group mt-3">
+                <label for="dataTextarea">Uploaded Data:</label>
+                <textarea id="dataTextarea" class="form-control" rows="10" readonly></textarea>
+            </div>
+
             <button class="btn btn-primary btn-block" onclick="pickWinners()">Pick Winners</button>
 
             <div id="loading" class="text-center mt-3" style="display: none;">
