@@ -26,6 +26,11 @@
             padding: 25px;
             margin-bottom: 40px;
         }
+        /* Textarea styling */
+        #dataTextarea {
+            white-space: pre-wrap; /* To preserve line breaks */
+            font-size: 14px;
+        }
     </style>
     <script src="js/html2canvas.min.js"></script>
     <script>
@@ -111,7 +116,21 @@
                 const status = participant.isWinner ? '✗' : '✓';
                 return `${status} ${participant.name}`;
             }).join('\n');
+
+            // Apply color change for winners
+            const text = textarea.value;
+            const coloredText = text.split('\n').map(line => {
+                if (line.startsWith('✗')) {
+                    return `<span style="color: red;">${line}</span>`;
+                }
+                return line;
+            }).join('\n');
+
+            // Update the textarea content with colored text
+            textarea.innerHTML = coloredText;
         }
+
+
 
         function saveAsImage() {
             const winnersList = document.getElementById('winnersList');
@@ -129,7 +148,14 @@
 <div class="container mt-5">
     <div class="card shadow-sm">
         <div class="card-body">
-            <h2 class="card-title text-center">Wilfest - Doorprize Winners</h2>
+            <h2 class="card-title text-center">
+                <img src="image/logo.png" alt="Wilfest Logo" style="max-height: 120px; vertical-align: middle; margin-right: 10px;">
+            </h2>
+            
+            <h2 class="card-title text-center" style="font-family: 'Allerta Stencil'; font-style: italic; font-weight: 900; font-size: 40px;">
+                Doorprize Winners
+            </h2>
+            
             <div class="form-group">
                 <label for="numWinners">Number of Winners:</label>
                 <input type="number" id="numWinners" class="form-control" required min="1">
