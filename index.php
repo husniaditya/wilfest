@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wilfest - Doorprize Winners</title>
+    <!-- Bootstrap CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <style>
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #007bff;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .winner-list-item {
+            font-size: 2rem; /* Larger text */
+            font-style: bold; /* Bold text */
+            padding: 25px; /* More space */
+            margin-bottom: 40px; /* Space between items */
+        }
+    </style>
+    <script>
+        let participants = [];
+        let pickedWinners = [];
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const lines = e.target.result.split('\n');
+                    participants = lines.map(line => line.split(',')[0]).filter(Boolean);
+                    alert("File loaded successfully! Total participants: " + participants.length);
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function pickWinners() {
+            const numWinners = parseInt(document.getElementById('numWinners').value);
+            if (numWinners > participants.length) {
+                alert("Not enough remaining participants to pick " + numWinners + " winners.");
+                return;
+            }
+
+            // Show loading animation
+            document.getElementById('loading').style.display = 'block';
+
+            setTimeout(() => {
+                // Shuffle and pick winners
+                const shuffled = [...participants].sort(() => Math.random() - 0.5);
+                const newWinners = shuffled.slice(0, numWinners);
+
+                // Remove the picked winners from participants
+                participants = participants.filter(p => !newWinners.includes(p));
+
+                // Add to pickedWinners list for tracking
+                pickedWinners.push(...newWinners);
+
+                // Display winners with numbers
+                document.getElementById('loading').style.display = 'none';
+                const winnersList = document.getElementById('winnersList');
+                winnersList.innerHTML = `<h3 class="my-3">Number of Winners: ${numWinners}</h3>`;
+                newWinners.forEach((winner, index) => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item list-group-item-success winner-list-item';
+                    listItem.textContent = `${index + 1}. ${winner}`;
+                    winnersList.appendChild(listItem);
+                });
+                
+                alert("Remaining participants: " + participants.length);
+            }, 1000); // Simulate loading time
+        }
+    </script>
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-center">Wilfest - Doorprize Winners</h2>
+            <div class="form-group">
+                <label for="numWinners">Number of Winners:</label>
+                <input type="number" id="numWinners" class="form-control" required min="1">
+            </div>
+            <div class="form-group">
+                <label for="csvFile">Upload CSV File:</label>
+                <input type="file" id="csvFile" class="form-control-file" accept=".csv" onchange="handleFileUpload(event)">
+            </div>
+            <button class="btn btn-primary btn-block" onclick="pickWinners()">Pick Winners</button>
+
+            <div id="loading" class="text-center mt-3" style="display: none;">
+                <div class="loading-spinner"></div> Generating winners, please wait...
+            </div>
+
+            <ul id="winnersList" class="list-group mt-4"></ul>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS and dependencies (optional for advanced Bootstrap components) -->
+<script src="js/jquery-3.5.1.slim.min.js"></script>
+<script src="js/popper.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+
+</body>
+</html>
