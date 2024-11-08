@@ -71,7 +71,7 @@
             if (!proceed) return;
 
             const numWinners = parseInt(document.getElementById('numWinners').value);
-            const availableParticipants = participants.filter(p => !p.isWinner);
+            const availableParticipants = participants.filter(p => !p.isWinner); // Filter out already chosen winners
 
             if (numWinners > availableParticipants.length) {
                 alert("Not enough remaining participants to pick " + numWinners + " winners.");
@@ -81,24 +81,36 @@
             document.getElementById('loading').style.display = 'block';
 
             setTimeout(() => {
-                const shuffled = availableParticipants.sort(() => Math.random() - 0.5);
-                const newWinners = shuffled.slice(0, numWinners);
+                const winners = [];
 
-                // Mark selected winners and update display
-                newWinners.forEach(winner => {
-                    winner.isWinner = true;
-                    pickedWinners.push(winner.name);
-                });
+                // Pick winners using random index
+                for (let i = 0; i < numWinners; i++) {
+                    // Generate a random index between 0 and the length of available participants
+                    const randomIndex = Math.floor(Math.random() * availableParticipants.length);
 
-                // Update localStorage with the new participant statuses
+                    // Select the participant at that random index
+                    const selectedWinner = availableParticipants[randomIndex];
+                    selectedWinner.isWinner = true;
+
+                    // Add the selected winner to the winners list
+                    winners.push(selectedWinner);
+
+                    // Remove the selected winner from the available participants to avoid selecting them again
+                    availableParticipants.splice(randomIndex, 1);
+                }
+
+                // Save the updated participants list to localStorage
                 localStorage.setItem("participants", JSON.stringify(participants));
-                
+
+                // Update the participant status display
                 updateParticipantStatus();
 
                 document.getElementById('loading').style.display = 'none';
+
+                // Display the winners
                 const winnersList = document.getElementById('winnersList');
                 winnersList.innerHTML = `<h3 class="my-3">Number of Winners: ${numWinners}</h3>`;
-                newWinners.forEach((winner, index) => {
+                winners.forEach((winner, index) => {
                     const listItem = document.createElement('li');
                     listItem.className = 'list-group-item list-group-item-success winner-list-item';
                     listItem.textContent = `${index + 1}. ${winner.name}`;
@@ -110,27 +122,18 @@
             }, 1000);
         }
 
+
         function updateParticipantStatus() {
             const textarea = document.getElementById('dataTextarea');
+            // Re-load participants from localStorage to ensure you're using the most recent data
+            participants = JSON.parse(localStorage.getItem("participants")) || [];
+
+            // Update the status (✓ or ✗) along with the participant name
             textarea.value = participants.map(participant => {
                 const status = participant.isWinner ? '✗' : '✓';
                 return `${status} ${participant.name}`;
             }).join('\n');
-
-            // Apply color change for winners
-            const text = textarea.value;
-            const coloredText = text.split('\n').map(line => {
-                if (line.startsWith('✗')) {
-                    return `<span style="color: red;">${line}</span>`;
-                }
-                return line;
-            }).join('\n');
-
-            // Update the textarea content with colored text
-            textarea.innerHTML = coloredText;
         }
-
-
 
         function saveAsImage() {
             const winnersList = document.getElementById('winnersList');
